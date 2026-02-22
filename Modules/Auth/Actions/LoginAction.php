@@ -2,31 +2,34 @@
 
 namespace Modules\Auth\Actions;
 
-use App\Exceptions\BusinessException;
-use Illuminate\Support\Facades\Hash;
+use Modules\Auth\Chain\Login\CreateTokenHandler;
+use Modules\Auth\Chain\Login\InactiveStatusHandler;
+use Modules\Auth\Chain\Login\LoginContext;
+use Modules\Auth\Chain\Login\BannedStatusHandler;
+use Modules\Auth\Chain\Login\ValidateCredentialsHandler;
 use Modules\Auth\DTOs\LoginDTO;
-use Modules\Auth\Enums\UserStatusEnum;
-use Modules\Auth\Repositories\UserRepositoryInterface;
 
 class LoginAction
 {
+    private ValidateCredentialsHandler $chainHead;
+
     public function __construct(
-        private UserRepositoryInterface $userRepository,
-    ) {}
+        ValidateCredentialsHandler $validateCredentials,
+        BannedStatusHandler $bannedStatus,
+        InactiveStatusHandler $inactiveStatus,
+        CreateTokenHandler $createToken,
+    ) {
+        $validateCredentials->setNext($bannedStatus);
+        $bannedStatus->setNext($inactiveStatus);
+        $inactiveStatus->setNext($createToken);
+
+        $this->chainHead = $validateCredentials;
+    }
+
     public function execute(LoginDTO $dto): array
     {
-        $user = $this->userRepository->findByEmail($dto->email);
-        if (!$user || !Hash::check($dto->password, $user->password)) {
-            throw new BusinessException('Invalid credentials.', 401);
-        }
-        if ($user->status === UserStatusEnum::BANNED) {
-            throw new BusinessException('Account is banned.', 403);
-        }
-        if ($user->status === UserStatusEnum::INACTIVE) {
-            throw new BusinessException('Account is inactive.', 403);
-        }
-        $user->tokens()->where('name', $dto->deviceName)->delete(); // revoke old
-        $token = $user->createToken($dto->deviceName)->plainTextToken;
-        return ['user' => $user, 'token' => $token];
+        $context = new LoginContext($dto);
+
+        return $this->chainHead->handle($context);
     }
 }
