@@ -1,0 +1,117 @@
+$categories = Cache::rememberForever('categories:tree', function () {
+    return Category::with('children')
+        ->whereNull('parent_id')
+        ->where('is_active', true)
+        ->orderBy('sort_order')
+        ->get();
+});
+
+✅ K garxa?
+
+Cache key: categories:tree
+
+Pahilo request ma:
+
+Cache ma key chaina → DB query run huncha
+
+Result cache ma forever store huncha
+
+Arko request ma:
+
+Cache hit → DB query run hudaina
+
+Direct cached data return huncha
+
+
+✅ Kina use gareko?
+
+Category tree:
+
+Frequently used (header menu, sidebar, filters)
+
+Rarely changed
+
+Hierarchical structure (parent → children)
+
+So this is perfect candidate for caching.
+
+
+🧠 Practical Example
+
+E-commerce site ma:
+
+10,000 users per hour homepage open garcha
+
+Header ma category menu load huncha
+
+Without cache:
+
+10,000 DB queries/hour
+
+With cache:
+
+1 DB query (first time)
+9,999 cache hits
+
+➡️ Massive performance improvement
+➡️ DB load drastically reduce
+
+
+🔵 2️⃣ rememberForever() kina?
+Cache::rememberForever(...)
+
+TTL set gareko chaina
+
+Until manually remove, cache basirahancha
+
+
+Because:
+
+Categories frequently change hudaina
+
+Stable data ho
+
+
+
+🔵 3️⃣ Store / Update / Delete ma kina Cache::forget()?
+Cache::forget('categories:tree');
+K garxa?
+
+Old cached category tree delete garxa
+
+Kina garnu parcha?
+
+Example:
+
+Cache ma:
+
+Electronics
+  ├─ Mobile
+  ├─ Laptop
+
+Admin adds:
+
+Tablet
+
+If forget nagare:
+
+Users le Tablet category dekhdaina
+
+Old cache stale huncha
+
+So:
+
+👉 Data change bhayo = cache invalidate garnu parcha
+👉 Next request = fresh DB fetch + new cache store
+
+
+
+🔵 5️⃣ Why not use tags here?
+
+Category list:
+
+Single cache key matra xa (categories:tree)
+
+So forget() enough
+
+Tags unnecessary complexity

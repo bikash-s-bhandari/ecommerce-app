@@ -14,7 +14,6 @@ class RoleMiddleware
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
     public function handle(Request $request, Closure $next, string ...$roles): mixed
-
     {
         if (!$request->user() || !in_array($request->user()->role->value, $roles)) {
             return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 403);

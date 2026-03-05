@@ -1,4 +1,9 @@
 {
     "Auth": true,
-    "Catalog": true
+    "Catalog": true,
+    "Cart": true,
+    "Order": true,
+    "Payment": true,
+    "Notification": true,
+    "Admin": true
 }

@@ -7,6 +7,8 @@ use Illuminate\Support\ServiceProvider;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
+use Modules\Catalog\Repositories\EloquentProductRepository;
+use Modules\Catalog\Repositories\ProductRepositoryInterface;
 
 class CatalogServiceProvider extends ServiceProvider
 {
@@ -36,6 +38,7 @@ class CatalogServiceProvider extends ServiceProvider
     {
         $this->app->register(EventServiceProvider::class);
         $this->app->register(RouteServiceProvider::class);
+        $this->app->bind(ProductRepositoryInterface::class, EloquentProductRepository::class);
     }
 
     /**
