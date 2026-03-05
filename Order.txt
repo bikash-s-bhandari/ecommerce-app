@@ -1,0 +1,192 @@
+OrderStatusEnum.php
+
+🧠 First: Transition vaneko k ho?
+
+Transition =
+👉 Order ko current status bata next allowed status ma change garna milxa ki mildaina check garne rule.
+
+Example:
+
+PENDING → CONFIRMED  ✅ allowed
+PENDING → SHIPPED    ❌ not allowed
+
+Yo rule nai canTransitionTo() le control garirako cha.
+
+
+
+🧾 1️⃣ orders Table – Main Order Record
+
+Yo table chai ek choti place bhayeko order ko summary ho.
+
+Think like this:
+
+orders = Invoice header
+order_items = Invoice ko line items
+
+
+🔢 $table->string('order_number', 20)->unique();
+
+Yo public-facing order ID ho.
+
+Example:
+
+ORD-20260305-0001
+
+Why separate from id?
+
+Security (predictable ID avoid garna)
+
+Business readable format
+
+Customer support friendly
+
+
+👤 $table->foreignId('user_id')->constrained()->restrictOnDelete();
+
+Order kasle gareko?
+
+restrictOnDelete() ko meaning:
+
+User delete garna mildaina if order exists.
+
+Why?
+
+Because:
+
+Financial record ho
+
+Audit trail important cha
+
+
+
+
+🚚 $table->json('shipping_address');
+
+🔥 Important design decision.
+
+Yo address relation bata reference gareko hoina.
+
+Instead:
+
+SNAPSHOT stored as JSON
+
+Why?
+
+Imagine:
+
+User le address update garyo
+
+Purano order ma address change hunu hudaina
+
+Example stored JSON:
+
+{
+  "full_name": "Bikash Bhandari",
+  "street_1": "Kathmandu",
+  "city": "Kathmandu",
+  "country": "Nepal"
+}
+
+Even if user edits address later → order remains same.
+
+
+📊 $table->index(['user_id', 'status', 'created_at']);
+
+Useful for:
+
+User order history
+
+Admin dashboard filtering
+
+Status-wise reporting
+
+
+
+
+🛍 2️⃣ order_items Table – Line Items
+
+Yo table ma order bhitra ko individual products store huncha.
+
+Example:
+
+Order:
+Order #1001
+
+
+Items:
+
+| Product | Qty | Price |
+| ------- | --- | ----- |
+| Laptop  | 1   | 1000  |
+| Mouse   | 2   | 50    |
+
+Each row = one order_items record.
+
+
+
+
+📦 Snapshot Fields
+$table->string('product_title', 200);
+$table->string('product_sku', 60)->nullable();
+$table->decimal('unit_price', 10, 2);
+
+🔥 Extremely important concept.
+
+Why snapshot?
+
+Imagine:
+
+Product price was 1000
+
+Later price becomes 1200
+
+Old order ma 1000 nai hunu parcha.
+
+So:
+
+unit_price = price at order time
+
+Same for:
+
+product_title
+
+product_sku
+
+Even if product renamed → order unchanged.
+
+
+
+
+🧠 Real Flow Example
+
+User cart:
+
+Product	Qty	Price
+Laptop	1	1000
+Mouse	2	50
+
+
+
+Checkout time:
+
+Step 1: Create order
+orders:
+subtotal = 1100
+tax = 110
+shipping = 50
+total = 1260
+Step 2: Insert order_items
+
+Row 1:
+
+product_title = Laptop
+quantity = 1
+unit_price = 1000
+subtotal = 1000
+
+Row 2:
+
+product_title = Mouse
+quantity = 2
+unit_price = 50
+subtotal = 100
