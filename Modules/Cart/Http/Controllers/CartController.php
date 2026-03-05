@@ -3,54 +3,67 @@
 namespace Modules\Cart\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Modules\Cart\Actions\AddToCartAction;
+use Modules\Cart\Actions\UpdateCartItemAction;
+use Modules\Cart\DTOs\AddToCartDTO;
+use Modules\Cart\Http\Resources\CartResource;
+use Modules\Cart\Models\CartItem;
+use Modules\Cart\Repositories\CartRepository;
 
 class CartController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(Request $request, CartRepository $cartRepo): JsonResponse
     {
-        return view('cart::index');
+        $cart = $cartRepo->resolveCart($request)->load('items.product.images');
+
+        return $this->success(CartResource::make($cart));
+    }
+    public function addItem(Request $request, AddToCartAction $action): JsonResponse
+    {
+        $request->validate([
+            'product_id' => ['required', 'integer', 'exists:products,id'],
+            'quantity' => ['required', 'integer', 'min:1', 'max:100'],
+        ]);
+        $cart = $action->execute($request, AddToCartDTO::fromRequest($request));
+
+        return $this->success(CartResource::make($cart), 'Item added to cart');
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function updateItem(Request $request, CartItem $item, UpdateCartItemAction
+    $action): JsonResponse
     {
-        return view('cart::create');
+        $request->validate(['quantity' => ['required', 'integer', 'min:1', 'max:100']]);
+        $this->ensureCartItemBelongsToUser($request, $item);
+        $cart = $action->execute($item, $request->validated('quantity'));
+
+        return $this->success(CartResource::make($cart), 'Cart updated');
+    }
+    public function removeItem(Request $request, CartItem $item, CartRepository $cartRepo): JsonResponse
+    {
+        $this->ensureCartItemBelongsToUser($request, $item);
+        $cartRepo->removeItem($item);
+
+        return $this->success(null, 'Item removed from cart');
+    }
+    public function clear(Request $request, CartRepository $cartRepo): JsonResponse
+    {
+        $cart = $cartRepo->resolveCart($request);
+        $cartRepo->clear($cart->id);
+
+        return $this->success(null, 'Cart cleared');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request) {}
-
-    /**
-     * Show the specified resource.
-     */
-    public function show($id)
+    private function ensureCartItemBelongsToUser(Request $request, CartItem $item): void
     {
-        return view('cart::show');
+        $cart = $this->resolveCartForRequest($request);
+        if ($item->cart_id !== $cart->id) {
+            abort(403, 'Unauthorized cart access');
+        }
     }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit($id)
+    private function resolveCartForRequest(Request $request)
     {
-        return view('cart::edit');
+        return app(CartRepository::class)->resolveCart($request);
     }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, $id) {}
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy($id) {}
 }

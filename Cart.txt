@@ -1,0 +1,180 @@
+🟢 1️⃣ carts table – “Cart ko main container”
+Schema::create('carts', function (Blueprint $table) {
+    $table->id();
+    $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
+    $table->string('session_id', 100)->nullable()->index();
+    $table->timestamp('expires_at')->nullable();
+    $table->timestamps();
+    $table->unique(['user_id']);
+    $table->index(['session_id', 'expires_at']);
+});
+📦 Practical Meaning
+
+carts = shopping bag itself
+
+Example:
+
+User Bikash website ma login garyo
+
+Usko ekta cart huncha
+
+Tyo cart vitra dherai products huncha
+
+So:
+
+👉 carts table = ek user ko ek shopping cart record
+
+
+
+🔎 Columns ko meaning
+✅ user_id
+
+Login user ko cart
+
+unique(['user_id']) → ek user ko ek matra cart
+
+Same user ko 2 ota cart hudaina
+
+✅ session_id
+
+Guest user ko lagi
+
+Login nagareko user ko cart track garna
+
+Browser session based
+
+✅ expires_at
+
+Guest cart expire huna sakcha
+
+Example: 7 din pachi delete
+
+
+
+🟢 2️⃣ cart_items table – “Cart vitra ko products”
+Schema::create('cart_items', function (Blueprint $table) {
+    $table->id();
+    $table->foreignId('cart_id')->constrained()->cascadeOnDelete();
+    $table->foreignId('product_id')->constrained()->restrictOnDelete();
+    $table->unsignedInteger('quantity');
+    $table->decimal('unit_price', 10, 2);
+    $table->timestamps();
+    $table->unique(['cart_id', 'product_id']);
+});
+🛒 Practical Meaning
+
+cart_items = cart vitra bhako products
+
+Example:
+
+Bikash ko cart ma:
+
+
+
+| Product | Qty | Price  |
+| ------- | --- | ------ |
+| Laptop  | 1   | 100000 |
+| Mouse   | 2   | 1500   |
+
+
+🔥 carts vs cart_items difference (Very Clear)
+
+
+| carts                     | cart_items                  |
+| ------------------------- | --------------------------- |
+| Cart ko container         | Cart vitra ko products      |
+| 1 record per user/session | Multiple records per cart   |
+| Belongs to user           | Belongs to cart             |
+| Metadata store garxa      | Product details store garxa |
+
+
+
+Cart hasMany CartItem
+CartItem belongsTo Cart
+CartItem belongsTo Product
+
+
+
+
+🔥 Important Practical Points
+1️⃣ cascadeOnDelete()
+$table->foreignId('cart_id')->constrained()->cascadeOnDelete();
+
+👉 Cart delete bhayo bhane
+→ Cart vitra ko sabai cart_items pani automatically delete huncha
+
+Safe & clean 👍
+
+2️⃣ restrictOnDelete()
+$table->foreignId('product_id')->constrained()->restrictOnDelete();
+
+👉 Product cart ma cha bhane
+→ Product delete garna mildaina
+
+Data consistency maintain huncha.
+
+3️⃣ unit_price snapshot kina?
+$table->decimal('unit_price', 10, 2);
+
+⚠️ Important business logic
+
+Suppose:
+
+Laptop price = 100000
+
+User cart ma add garyo
+
+Pachi admin le price change garyo → 120000
+
+Cart ma bhako price change hunu hudaina.
+
+So:
+
+👉 Add garda ko price store gareko = snapshot price
+👉 Checkout ma correct calculation huncha
+
+Very important ecommerce concept 💡
+
+
+
+
+
+
+4️⃣ unique(['cart_id', 'product_id'])
+
+👉 Same cart ma same product 2 choti insert hudaina
+Instead:
+
+Quantity update huncha
+
+Example:
+
+❌ Wrong:
+
+Cart 1 → Laptop
+Cart 1 → Laptop
+
+✅ Correct:
+
+Cart 1 → Laptop (qty = 2)
+
+
+
+
+🎯 Real World Example Flow
+
+Guest user → session_id ko cart create
+
+Add product → cart_items ma record insert
+
+Login garyo → session cart merge into user cart
+
+Checkout → cart → order ma convert
+
+Cart clear
+
+🧾 Simple Analogy
+
+🛒 carts = Shopping bag
+
+📦 cart_items = Bag vitra rakheko saman

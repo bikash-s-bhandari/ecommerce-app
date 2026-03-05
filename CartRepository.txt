@@ -1,0 +1,182 @@
+🟢 1️⃣ resolveCart(Request $request)
+public function resolveCart(Request $request): Cart
+🎯 K kam ho?
+
+👉 Current user ko cart find garne
+👉 Chain bhaye create garne
+
+
+
+✅ If guest user:
+$sessionId = $request->cookie('cart_session', Str::uuid());
+
+Cookie ma session_id xa bhane use
+
+Chain bhaye new UUID generate
+
+$cart = $this->model->firstOrCreate(['session_id' => $sessionId]);
+
+Session ko basis ma cart create/find
+
+cookie()->queue('cart_session', $sessionId, 60 * 24 * 30);
+
+30 din ko lagi cookie set
+
+
+
+
+🟢 2️⃣ addItem(...)
+public function addItem(Cart $cart, int $productId, int $qty, float $price)
+🎯 K kam ho?
+
+👉 Product cart ma add garne
+👉 Already xa bhane quantity badhaune
+
+
+
+
+🟢 6️⃣ mergeGuestCart(...) 🔥 Important
+public function mergeGuestCart(string $sessionId, int $userId)
+🎯 K kam ho?
+
+👉 Guest user le add gareko cart
+👉 Login pachi user cart sanga merge garne
+
+🧠 Real Scenario
+
+Guest adds:
+
+Laptop (qty 1)
+
+Mouse (qty 2)
+
+Then login
+
+System:
+
+$guestCart = Cart::where('session_id', $sessionId)->with('items')->first();
+
+Guest cart find garxa
+
+$userCart = Cart::firstOrCreate(['user_id' => $userId]);
+
+User cart find/create
+
+Merge Logic
+foreach ($guestCart->items as $item)
+
+For each product:
+
+If product already user cart ma xa →
+→ quantity add
+
+If chaina →
+→ cart_id change garera user cart ma move
+
+
+
+
+
+
+🟢 1️⃣ Cookie kaha bata auxa?
+
+Cookie browser bata auxa.
+
+Flow yesto huncha:
+
+📍 First Time Visit (Guest User)
+
+User website open garcha
+
+Add to cart click garcha
+
+resolveCart() run huncha
+
+Browser ma cart_session cookie chaina
+
+So yo line execute huncha:
+
+$sessionId = $request->cookie('cart_session', Str::uuid());
+
+→ New random session ID generate huncha
+Example:
+
+550e8400-e29b-41d4-a716-446655440000
+
+
+🟢 2️⃣ Cookie set kasari huncha?
+cookie()->queue('cart_session', $sessionId, 60 * 24 * 30);
+
+
+
+Yo line le:
+
+👉 Response ma Set-Cookie header pathauncha
+👉 Browser le cookie save garxa
+
+Browser ma store huncha:
+
+cart_session = 550e8400-e29b-41d4-a716-446655440000
+Expires = 30 days
+
+Now browser le future requests ma automatically pathauncha.
+
+
+
+🟢 3️⃣ Next Request ma cookie kasari auxa?
+
+User arko product add garcha.
+
+Browser automatically request sanga yo header pathauncha:
+
+Cookie: cart_session=550e8400-e29b-41d4-a716-446655440000
+
+Laravel ma:
+
+$request->cookie('cart_session')
+
+le tyo value read garxa.
+
+So aba:
+
+$sessionId = $request->cookie('cart_session', Str::uuid());
+
+→ Cookie exist cha → UUID generate hudaina
+→ Existing session use huncha
+
+
+
+
+🛒 Real World Scenario (Step-by-step)
+Step 1:
+
+Guest user opens site
+No cookie yet
+
+Step 2:
+
+User adds Laptop
+
+New UUID generate
+
+Cart create:
+
+carts table:
+id: 1
+session_id: 550e8400...
+
+Cookie set in browser
+
+Step 3:
+
+User refreshes page or adds Mouse
+
+Browser sends cookie
+System finds cart with same session_id
+New item add huncha same cart ma
+
+🧠 Important Concept
+
+Guest user ko identity = cookie based session_id
+
+Login user ko identity = user_id
