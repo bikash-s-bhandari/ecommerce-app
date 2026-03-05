@@ -3,6 +3,8 @@
 use Illuminate\Support\Facades\Route;
 use Modules\Catalog\Http\Controllers\CategoryController;
 use Modules\Catalog\Http\Controllers\ProductController;
+use Modules\Catalog\Http\Controllers\ProductImageController;
+
 
 Route::prefix('v1')->group(function () {
     // Public product routes
@@ -18,5 +20,13 @@ Route::prefix('v1')->group(function () {
         Route::post('categories', [CategoryController::class, 'store']);
         Route::put('categories/{category}', [CategoryController::class, 'update']);
         Route::delete('categories/{category}', [CategoryController::class, 'destroy']);
+
+        // Product image management
+        Route::post('products/{id}/images',              [ProductImageController::class, 'upload']);
+        Route::patch('products/{productId}/images/{image}/primary', [ProductImageController::class, 'setPrimary']);
+        Route::delete('products/images/{image}',         [ProductImageController::class, 'destroy']);
+
+        // Category image
+        Route::post('categories/{category}/image',       [CategoryController::class, 'uploadImage']);
     });
 });

@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Cache;
 use Modules\Catalog\DTOs\CategoryDTO;
 use Modules\Catalog\Http\Resources\CategoryResource;
 use Modules\Catalog\Models\Category;
+use Modules\Catalog\Http\Requests\UploadCategoryImageRequest;
+use Modules\Catalog\Actions\UploadCategoryImageAction;
 
 class CategoryController extends Controller
 {
@@ -76,5 +78,18 @@ class CategoryController extends Controller
         Cache::forget('categories:tree');
 
         return $this->noContent();
+    }
+
+    public function uploadImage(
+        UploadCategoryImageRequest $request,
+        Category $category,
+        UploadCategoryImageAction $action
+    ): JsonResponse {
+        $category = $action->execute($category, $request->file('image'));
+
+        return $this->success(
+            CategoryResource::make($category),
+            'Category image uploaded'
+        );
     }
 }
