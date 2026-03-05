@@ -14,6 +14,9 @@ use Modules\Auth\DTOs\RegisterDTO;
 use Modules\Auth\Http\Requests\LoginRequest;
 use Modules\Auth\Http\Requests\RegisterRequest;
 use Modules\Auth\Http\Resources\UserResource;
+use Modules\Auth\Actions\UpdateProfileAction;
+use Modules\Auth\DTOs\UpdateProfileDTO;
+use Modules\Auth\Http\Requests\UpdateProfileRequest;
 
 class AuthController extends Controller
 {
@@ -61,6 +64,16 @@ class AuthController extends Controller
         ]);
         $action->execute($request->token, $request->email, $request->password);
         return $this->success(null, 'Password reset successful. Please log in.');
+    }
+
+    public function updateProfile(UpdateProfileRequest $request, UpdateProfileAction
+    $action): JsonResponse
+    {
+        $user = $action->execute(
+            $request->user(),
+            UpdateProfileDTO::fromRequest($request)
+        );
+        return $this->success(UserResource::make($user), 'Profile updated');
     }
 
     public function logout(Request $request): JsonResponse

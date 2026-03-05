@@ -1,0 +1,85 @@
+Notes: Product List Caching in Laravel
+1️⃣ Purpose of Caching
+
+Problem: Product list queries (search, filters, pagination) heavy DB queries huncha → slow response in high traffic.
+
+Solution: Cache query result → next request fast, DB load reduce.
+
+Code Explained
+
+1. ListProductsAction
+
+public function execute(ProductFilterDTO $filter): LengthAwarePaginator
+{
+    $cacheKey = 'products:' . md5(serialize($filter));
+
+    return Cache::tags(['products'])->remember($cacheKey, 900, function () use ($filter) {
+        return $this->productRepository->search($filter);
+    });
+}
+
+| Part                                                 | Meaning                                                                                                      |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `$cacheKey = 'products:' . md5(serialize($filter));` | Filter criteria ko **unique key** generate. Eg: `category=5&priceMin=1000` → hash → cache key.               |
+| `Cache::tags(['products'])`                          | Tag group = **all product lists**. Flush gare paxi **related caches** remove huncha.                         |
+| `remember($cacheKey, 900, fn() => ...)`              | Cache **exists** bhaye return gar, **missa bhaye DB query run garera cache store** for 900 seconds (15 min). |
+| `$this->productRepository->search($filter)`          | DB query with filters → Eloquent + Scopes + Full-text search.                                                |
+
+
+3️⃣ Why Use Cache Here
+
+Product list = frequently requested, rarely updated → perfect candidate for caching.
+
+Filters vary (category, price, tags) → md5(serialize($filter)) le unique cache entry banaucha for each filter combination.
+
+Flush strategy:
+
+Admin creates/updates/deletes product → Cache::tags(['products'])->flush() → purano cache clear → next request fresh fetch.
+
+4️⃣ Practical Example
+Scenario:
+
+User searches for category 5, price < 1000 → filter = {categoryId:5, maxPrice:1000}
+
+Cache key = products:a1b2c3d4...
+
+Check cache: miss → query DB → result [p1, p2, p3] → cache store 15 min
+
+Next user same filter → cache hit → DB query avoid → fast response
+
+Admin updates p2:
+
+Cache::tags(['products'])->flush();
+
+Old list cache [p1, p2, p3] deleted
+
+Next request → DB fetch fresh list [p1, p2(updated), p3] → cache updated
+
+
+5️⃣ Summary Notes
+
+Cache Key → Unique for each filter set (md5(serialize($filter)))
+
+Cache Tag → 'products' → flush all product lists when data changes
+
+Remember() → Store DB query result, serve fast on subsequent requests
+
+Use Case → Product list, filterable/searchable pages → frequent reads, infrequent writes
+
+Effect:
+
+Faster user experience
+
+Reduced DB load
+
+Fresh data on create/update/delete via cache flush
+
+
+
+✅ Conclusion
+
+Current approach = safe and practical for most e-commerce apps.
+
+Minor tweaks (normalize filters, use Redis) → more robust, scalable.
+
+TTL 900 sec → balance between performance & freshness.
