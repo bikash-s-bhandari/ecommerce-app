@@ -1,8 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Modules\Payment\Http\Controllers\PaymentController;
+use Modules\Payment\Http\Controllers\StripeWebhookController;
 
-Route::middleware(['auth:sanctum'])->prefix('v1')->group(function () {
-    Route::apiResource('payments', PaymentController::class)->names('payment');
-});
+// Stripe sends raw body - exempt from CSRF & JSON middleware
+Route::post('v1/payments/stripe/webhook', [StripeWebhookController::class, 'handle'])
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class]);

@@ -1,0 +1,183 @@
+Payment.php model
+
+1. order_id
+
+कुन order को payment हो भन्ने relation
+
+orders table को foreign key
+
+एउटा order सँग एक वा धेरै payment attempt हुन सक्छ
+
+Example
+order_id = 101
+
+Meaning:
+Payment belongs to Order #101
+
+2. status
+
+Payment को current state
+
+तिमीले PaymentStatusEnum प्रयोग गरेको छौ। Normally statuses:
+
+pending
+processing
+paid
+failed
+refunded
+Example flow
+
+User pay गर्न खोज्छ:
+
+status = pending
+
+Stripe confirm भएपछि:
+
+status = paid
+
+यदि payment fail भयो भने
+
+status = failed
+
+Refund भयो भने
+
+status = refunded
+3. gateway
+
+Payment कुन provider बाट आएको हो
+
+Multiple gateway support गर्दा use हुन्छ।
+
+Example
+gateway = stripe
+gateway = khalti
+gateway = esewa
+gateway = paypal
+
+Example:
+
+gateway = stripe
+4. transaction_id
+
+Gateway ले दिएको unique transaction id
+
+Payment gateway ले payment success भएपछि unique ID दिन्छ।
+
+Stripe Example
+transaction_id = pi_3Nk4eLq123abc
+
+Esewa example
+
+transaction_id = 000AE4F
+
+Refund गर्दा पनि यही ID चाहिन्छ।
+
+5. payment_method
+
+User ले कुन method बाट pay गर्‍यो
+
+Gateway भित्र पनि multiple method हुन्छ।
+
+Example
+
+Stripe भित्र:
+
+payment_method = card
+payment_method = apple_pay
+payment_method = google_pay
+
+Esewa मा
+
+payment_method = wallet
+6. amount
+
+User ले pay गरेको amount
+
+तिमीले cast गरेको छौ:
+
+'amount' => 'decimal:2'
+Example
+amount = 100.00
+7. currency
+
+Payment कुन currency मा भएको हो
+
+Example
+currency = USD
+currency = NPR
+currency = INR
+
+Example:
+
+currency = USD
+8. gateway_response
+
+Gateway बाट आएको raw response JSON
+
+Debugging, auditing, dispute को लागि useful हुन्छ।
+
+Stripe response example:
+
+{
+  "id": "pi_123456",
+  "status": "succeeded",
+  "amount": 10000,
+  "currency": "usd",
+  "payment_method": "pm_abc"
+}
+
+Database मा:
+
+gateway_response = JSON
+
+Laravel मा automatically array मा convert हुन्छ।
+
+9. idempotency_key
+
+Duplicate payment रोक्न प्रयोग हुन्छ
+
+Network issue हुँदा user ले multiple times pay click गर्न सक्छ।
+
+Example
+
+User 2 पटक click गर्यो:
+
+Pay Now
+Pay Now
+
+Duplicate payment रोक्न:
+
+idempotency_key = order_101_payment
+
+Same key आयो भने system ले same transaction reuse गर्छ।
+
+Stripe मा पनि यो concept छ।
+
+10. paid_at
+
+Payment success भएको timestamp
+
+Example
+paid_at = 2026-03-06 14:15:00
+
+Pending हुँदा:
+
+paid_at = null
+
+Success भएपछि set हुन्छ।
+
+Full Real Life Example Record
+
+User pays $100 for Order #101 using Stripe card.
+
+id: 1
+order_id: 101
+status: paid
+gateway: stripe
+transaction_id: pi_3Nk4eLq123abc
+payment_method: card
+amount: 100.00
+currency: USD
+idempotency_key: order_101_payment
+paid_at: 2026-03-06 14:15:00
+gateway_response: {...}

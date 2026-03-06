@@ -8,7 +8,8 @@ use Modules\Order\Enums\OrderStatusEnum;
 use Illuminate\Database\Eloquent\Relations\{BelongsTo, HasMany};
 use Modules\Auth\Models\User;
 use Illuminate\Support\Str;
-
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Modules\Payment\Models\Payment;
 class Order extends Model
 {
     use HasFactory;
@@ -49,8 +50,8 @@ class Order extends Model
     {
         return $this->hasMany(OrderItem::class);
     }
-    // public function payment(): HasOne
-    // {
-    //     return $this->hasOne(Payment::class);
-    // }
+    public function payment(): HasOne
+    {
+        return $this->hasOne(Payment::class);
+    }
 }
