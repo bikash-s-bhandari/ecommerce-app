@@ -10,9 +10,11 @@ class StockValidator extends OrderValidatorHandler
     public function handle(PlaceOrderDTO $dto, array $cartItems): void
     {
         foreach ($cartItems as $item) {
-            if ($item->product->stock < $item->quantity) {
+            // $cartItems come from a joined query with product fields flattened
+            // (see PlaceOrderAction). We use the selected stock/title columns here.
+            if ($item->stock < $item->quantity) {
                 throw new BusinessException(
-                    "{$item->product->title}: only {$item->product->stock} units available.",
+                    "{$item->product_title}: only {$item->stock} units available.",
                     422
                 );
             }

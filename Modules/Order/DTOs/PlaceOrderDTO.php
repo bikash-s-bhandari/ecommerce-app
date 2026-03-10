@@ -12,14 +12,13 @@ readonly class PlaceOrderDTO
         public string $paymentToken, // Stripe PaymentMethod ID
         public ?string $notes = null,
     ) {}
-
     public static function fromRequest(Request $request): self
     {
         return new self(
             userId: $request->user()->id,
-            shippingAddress: $request->validated('shipping_address'),
-            paymentToken: $request->validated('payment_token'),
-            notes: $request->validated('notes'),
+            shippingAddress: $request->input('shipping_address'),
+            paymentToken: $request->input('payment_token'),
+            notes: $request->input('notes'),
         );
     }
 }
