@@ -2,6 +2,7 @@
 
 namespace Modules\Catalog\Repositories;
 
+use Illuminate\Cache\TaggableStore;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Cache;
 use Modules\Catalog\DTOs\ProductDTO;
@@ -62,8 +63,11 @@ class EloquentProductRepository implements ProductRepositoryInterface
         if ($dto->tagIds) {
             $product->tags()->sync($dto->tagIds);
         }
-        //Naya product create bhayo →sabai cached product lists remove
-        Cache::tags(['products'])->flush();
+
+        // Naya product create bhayo → sabai cached product lists remove (if store supports tags)
+        if (Cache::getStore() instanceof TaggableStore) {
+            Cache::tags(['products'])->flush();
+        }
 
         return $product->load(['category', 'images', 'tags']);
     }
@@ -83,8 +87,11 @@ class EloquentProductRepository implements ProductRepositoryInterface
         ]);
         $product->tags()->sync($dto->tagIds);
 
-        //Product update bhayo → product list cache + specific product cache clear garnu parcha, kina ki old data purano huncha.
-        Cache::tags(['products', 'product:' . $product->id])->flush();
+        // Product update bhayo → product list cache + specific product cache clear garnu parcha,
+        // kina ki old data purano huncha. Only when store supports tags.
+        if (Cache::getStore() instanceof TaggableStore) {
+            Cache::tags(['products', 'product:' . $product->id])->flush();
+        }
 
         return $product->load(['category', 'images', 'tags']);
     }
@@ -93,14 +100,18 @@ class EloquentProductRepository implements ProductRepositoryInterface
     {
         $product->delete();
 
-        //Product delete bhayo → list cache clear, so next time query fresh data lincha.
-        Cache::tags(['products'])->flush();
+        // Product delete bhayo → list cache clear, so next time query fresh data lincha.
+        if (Cache::getStore() instanceof TaggableStore) {
+            Cache::tags(['products'])->flush();
+        }
     }
     public function decrementStock(int $productId, int $qty): void
     {
         $this->model->where('id', $productId)->decrement('stock', $qty);
 
-        //Stock change bhayo → specific product cache refresh garna parcha, jaise "in stock" display update huncha.
-        Cache::tags(['product:' . $productId])->flush();
+        // Stock change bhayo → specific product cache refresh garna parcha, jaise "in stock" display update huncha.
+        if (Cache::getStore() instanceof TaggableStore) {
+            Cache::tags(['product:' . $productId])->flush();
+        }
     }
 }

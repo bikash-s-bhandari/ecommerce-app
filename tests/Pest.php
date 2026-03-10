@@ -11,9 +11,16 @@
 |
 */
 
-pest()->extend(Tests\TestCase::class)
+pest()
+    ->extend(Tests\TestCase::class)
     // ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
-    ->in('Feature');
+    ->in(
+        'Feature',
+        '../Modules/Auth/tests/Feature',
+        '../Modules/Catalog/tests/Feature',
+        '../Modules/Cart/tests/Feature',
+        '../Modules/Order/tests/Feature'
+    );
 
 
 // Global helpers

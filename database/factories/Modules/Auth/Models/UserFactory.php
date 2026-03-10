@@ -43,5 +43,14 @@ class UserFactory extends Factory
             'status'            => UserStatusEnum::ACTIVE,
         ];
     }
-}
 
+    public function admin(): self
+    {
+        return $this->state(function () {
+            return [
+                'role' => UserRoleEnum::ADMIN,
+                'status' => UserStatusEnum::ACTIVE,
+            ];
+        });
+    }
+}

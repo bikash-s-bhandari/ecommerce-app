@@ -83,3 +83,68 @@ Current approach = safe and practical for most e-commerce apps.
 Minor tweaks (normalize filters, use Redis) → more robust, scalable.
 
 TTL 900 sec → balance between performance & freshness.
+
+
+
+
+
+यो error को कारण testing environment मा प्रयोग भएको cache driver हो।
+
+Cache::tags() सबै cache driver ले support गर्दैन।
+
+Laravel मा cache tagging support गर्ने drivers:
+
+redis
+
+memcached
+
+Support नगर्ने drivers:
+
+file
+
+database
+
+array ❗ (testing मा default यही हुन्छ)
+
+Testing गर्दा Laravel ले सामान्यतया .env.testing मा CACHE_DRIVER=array प्रयोग गर्छ, त्यसैले:
+
+This cache store does not support tagging.
+
+error आउँछ।
+
+Solution 1 (Recommended for tests)
+
+Test environment मा array driver हुँदा tags प्रयोग नगर्ने।
+
+if (Cache::getStore() instanceof \Illuminate\Cache\TaggableStore) {
+    return Cache::tags(['products'])->remember($cacheKey, 900, function () use ($filter) {
+        return $this->productRepository->search($filter);
+    });
+}
+
+return Cache::remember($cacheKey, 900, function () use ($filter) {
+    return $this->productRepository->search($filter);
+});
+Solution 2 (Testing मा redis प्रयोग गर्ने)
+
+.env.testing
+
+CACHE_DRIVER=redis
+
+तर यसको लागि redis server run हुनु पर्छ, नत्र test fail हुन्छ।
+
+Solution 3 (Simpler helper method)
+
+Reusable function बनाउन सकिन्छ:
+
+function cacheRememberWithTags($tags, $key, $ttl, $callback)
+{
+    if (Cache::getStore() instanceof \Illuminate\Cache\TaggableStore) {
+        return Cache::tags($tags)->remember($key, $ttl, $callback);
+    }
+
+    return Cache::remember($key, $ttl, $callback);
+}
+
+✅ Best practice (large apps)
+Repository/service layer मा taggable cache check गरेर fallback राखिन्छ — especially testing र local development का लागि।
