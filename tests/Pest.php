@@ -12,8 +12,21 @@
 */
 
 pest()->extend(Tests\TestCase::class)
- // ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
+    // ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
     ->in('Feature');
+
+
+// Global helpers
+function actingAsAdmin()
+{
+    $user = \Modules\Auth\Models\User::factory()->admin()->create();
+    return test()->actingAs($user);
+}
+function actingAsCustomer()
+{
+    $user = \Modules\Auth\Models\User::factory()->create();
+    return test()->actingAs($user);
+}
 
 /*
 |--------------------------------------------------------------------------
