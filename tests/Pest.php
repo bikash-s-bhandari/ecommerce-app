@@ -19,7 +19,8 @@ pest()
         '../Modules/Auth/tests/Feature',
         '../Modules/Catalog/tests/Feature',
         '../Modules/Cart/tests/Feature',
-        '../Modules/Order/tests/Feature'
+        '../Modules/Order/tests/Feature',
+        '../Modules/Admin/tests/Feature'
     );
 
 
