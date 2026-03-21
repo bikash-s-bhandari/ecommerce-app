@@ -11,15 +11,15 @@ use Modules\Order\Models\Order;
 use Modules\Order\Models\OrderItem;
 use Modules\Order\Enums\OrderStatusEnum;
 use Modules\Order\Validators\{AddressValidator, CartNotEmptyValidator, StockValidator};
-// use Modules\Payment\Actions\ProcessPaymentAction;
-// use Modules\Payment\DTOs\ProcessPaymentDTO;
+use Modules\Payment\Actions\ProcessPaymentAction;
+use Modules\Payment\DTOs\ProcessPaymentDTO;
 
 class PlaceOrderAction
 {
     public function __construct(
         private CartRepository $cartRepository,
         private ProductRepositoryInterface $productRepository,
-        // private ProcessPaymentAction $processPaymentAction,
+        private ProcessPaymentAction $processPaymentAction,
     ) {}
 
     public function execute(PlaceOrderDTO $dto): Order
@@ -72,12 +72,12 @@ class PlaceOrderAction
             }
 
             // 6. Process payment
-            // $this->processPaymentAction->execute(new ProcessPaymentDTO(
-            //     orderId: $order->id,
-            //     amount: $total,
-            //     currency: 'usd',
-            //     paymentMethodId: $dto->paymentToken,
-            // ));
+            $this->processPaymentAction->execute(new ProcessPaymentDTO(
+                orderId: $order->id,
+                amount: $total,
+                currency: 'usd',
+                paymentMethodId: $dto->paymentToken,
+            ));
             // 7. Clear cart
             $this->cartRepository->clear($cart->id);
             // 8. Dispatch event (queued notification)

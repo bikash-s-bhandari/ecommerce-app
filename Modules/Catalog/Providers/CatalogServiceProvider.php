@@ -2,6 +2,7 @@
 
 namespace Modules\Catalog\Providers;
 
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
 use Nwidart\Modules\Traits\PathNamespace;
@@ -28,6 +29,7 @@ class CatalogServiceProvider extends ServiceProvider
         $this->registerTranslations();
         $this->registerConfig();
         $this->registerViews();
+        $this->registerPolicies();
         $this->loadMigrationsFrom(module_path($this->name, 'database/migrations'));
     }
 
@@ -118,6 +120,17 @@ class CatalogServiceProvider extends ServiceProvider
         $module_config = require $path;
 
         config([$key => array_replace_recursive($existing, $module_config)]);
+    }
+
+    /**
+     * Register model policies.
+     */
+    protected function registerPolicies(): void
+    {
+        Gate::policy(
+            \Modules\Catalog\Models\Category::class,
+            \Modules\Catalog\Policies\CategoryPolicy::class
+        );
     }
 
     /**

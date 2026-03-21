@@ -3,6 +3,9 @@
 namespace Modules\Auth\Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use Modules\Auth\Enums\UserRoleEnum;
+use Modules\Auth\Enums\UserStatusEnum;
+use Modules\Auth\Models\User;
 
 class AuthDatabaseSeeder extends Seeder
 {
@@ -11,6 +14,15 @@ class AuthDatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // $this->call([]);
+        User::firstOrCreate(
+            ['email' => 'admin@gmail.com'],
+            [
+                'name'   => 'Admin',
+                'password' => 'admin123',
+                'phone'  => null,
+                'role'   => UserRoleEnum::ADMIN,
+                'status' => UserStatusEnum::ACTIVE,
+            ]
+        );
     }
 }

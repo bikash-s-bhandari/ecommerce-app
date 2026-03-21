@@ -9,8 +9,8 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Modules\Auth\Enums\UserRoleEnum;
 use Modules\Auth\Enums\UserStatusEnum;
-// use Modules\Order\Models\Order;
-
+use Modules\Order\Models\Order;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
@@ -46,9 +46,9 @@ class User extends Authenticatable
         return $this->status === UserStatusEnum::ACTIVE;
     }
 
-    // // Relations
-    // public function orders(): \Illuminate\Database\Eloquent\Relations\HasMany
-    // {
-    //     return $this->hasMany(Order::class);
-    // }
+    // Relations
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class);
+    }
 }

@@ -31,7 +31,7 @@ class CategoryController extends Controller
         $this->authorize('create', Category::class);
 
         $request->validate([
-            'name' => ['required', 'string', 'max:100'],
+            'name' => ['required', 'string', 'max:100', 'unique:categories,name'],
             'description' => ['nullable', 'string'],
             'parent_id' => ['nullable', 'exists:categories,id'],
             'is_active' => ['nullable', 'boolean'],

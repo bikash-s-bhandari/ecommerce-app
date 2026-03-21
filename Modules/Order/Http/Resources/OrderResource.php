@@ -4,6 +4,7 @@ namespace Modules\Order\Http\Resources;
 
 use App\Http\Resources\BaseResource;
 use Illuminate\Http\Request;
+use Modules\Payment\Http\Resources\PaymentResource;
 
 class OrderResource extends BaseResource
 {
@@ -21,7 +22,7 @@ class OrderResource extends BaseResource
             'total' => (float) $this->total,
             'notes' => $this->notes,
             'items' => OrderItemResource::collection($this->whenLoaded('items')),
-            // 'payment' =>PaymentResource::make($this->whenLoaded('payment')),
+            'payment' =>PaymentResource::make($this->whenLoaded('payment')),
             'created_at' => $this->created_at->toIso8601String(),
             'updated_at' => $this->updated_at->toIso8601String(),
         ];

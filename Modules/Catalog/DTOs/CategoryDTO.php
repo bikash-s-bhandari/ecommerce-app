@@ -16,11 +16,11 @@ readonly class CategoryDTO
     public static function fromRequest(Request $request): self
     {
         return new self(
-            name: $request->validated('name'),
-            description: $request->validated('description'),
-            parentId: $request->validated('parent_id'),
-            isActive: (bool) $request->validated('is_active', true),
-            sortOrder: (int) $request->validated('sort_order', 0),
+            name: $request->input('name'),
+            description: $request->input('description'),
+            parentId: $request->input('parent_id'),
+            isActive: (bool) $request->input('is_active', true),
+            sortOrder: (int) $request->input('sort_order', 0),
         );
     }
 }
