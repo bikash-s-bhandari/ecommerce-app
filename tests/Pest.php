@@ -16,7 +16,7 @@ pest()
     // ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
     ->in(
         'Feature',
-        '../Modules/Auth/tests/Feature',
+        // '../Modules/Auth/tests/Feature',//class vitra direct use n i garna miklxa like uses(TestCase::class, RefreshDatabase::class);
         '../Modules/Catalog/tests/Feature',
         '../Modules/Cart/tests/Feature',
         '../Modules/Order/tests/Feature',

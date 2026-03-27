@@ -12,7 +12,7 @@ use Modules\Order\Models\OrderItem;
 use Modules\Order\Enums\OrderStatusEnum;
 use Modules\Order\Validators\{AddressValidator, CartNotEmptyValidator, StockValidator};
 use Modules\Payment\Actions\ProcessPaymentAction;
-use Modules\Payment\DTOs\ProcessPaymentDTO;
+use Modules\Payment\DTOs\PaymentInitiateDTO;
 
 class PlaceOrderAction
 {
@@ -71,11 +71,13 @@ class PlaceOrderAction
                 $this->productRepository->decrementStock($item->product_id, $item->quantity);
             }
 
-            // 6. Process payment
-            $this->processPaymentAction->execute(new ProcessPaymentDTO(
-                orderId: $order->id,
-                amount: $total,
-                currency: 'usd',
+            // 6. Initiate payment using the gateway the user chose at checkout
+            $this->processPaymentAction->execute(new PaymentInitiateDTO(
+                orderId:         $order->id,
+                amount:          $total,
+                currency:        $dto->gateway === 'stripe' ? 'usd' : 'NPR',
+                returnUrl:       config('app.url') . '/api/v1/payments/' . $dto->gateway . '/callback',
+                gateway:         $dto->gateway,
                 paymentMethodId: $dto->paymentToken,
             ));
             // 7. Clear cart

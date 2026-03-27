@@ -2,37 +2,46 @@
 
 namespace Modules\Payment\Actions;
 
-use Modules\Payment\Contracts\PaymentGatewayInterface;
-use Modules\Payment\DTOs\ProcessPaymentDTO;
+use Modules\Payment\DTOs\PaymentInitiateDTO;
+use Modules\Payment\DTOs\PaymentInitiateResultDTO;
 use Modules\Payment\Enums\PaymentStatusEnum;
+use Modules\Payment\Factories\PaymentGatewayFactory;
 use Modules\Payment\Models\Payment;
 
 class ProcessPaymentAction
 {
     public function __construct(
-        private PaymentGatewayInterface $gateway,
+        private PaymentGatewayFactory $factory,
     ) {}
 
-    public function execute(ProcessPaymentDTO $dto): Payment
+    /**
+     * @return array{payment: Payment, result: PaymentInitiateResultDTO}
+     */
+    public function execute(PaymentInitiateDTO $dto): array
     {
+        // Resolve the gateway the user chose in this request
+        $gateway = $this->factory->make($dto->gateway);
+
         $payment = Payment::create([
             'order_id' => $dto->orderId,
-            'status' => PaymentStatusEnum::PENDING,
-            'gateway' => 'stripe',
-            'amount' => $dto->amount,
+            'status'   => PaymentStatusEnum::PENDING,
+            'gateway'  => $dto->gateway,
+            'amount'   => $dto->amount,
             'currency' => $dto->currency,
         ]);
 
-        $result = $this->gateway->createIntent($dto);
+
+        $result = $gateway->initiate($dto);
+
 
         $payment->update([
-            'transaction_id' => $result['id'],
-            'status' => $result['status'] === 'succeeded' ?
-                PaymentStatusEnum::PAID : PaymentStatusEnum::PENDING,
-            'gateway_response' => $result['raw'],
-            'paid_at' => $result['status'] === 'succeeded' ? now() : null,
+            'transaction_id'   => $result->gatewayRef,
+            'gateway_response' => $result->raw,
         ]);
 
-        return $payment;
+        return [
+            'payment' => $payment,
+            'result'  => $result,
+        ];
     }
 }

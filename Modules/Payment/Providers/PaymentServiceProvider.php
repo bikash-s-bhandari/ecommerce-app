@@ -7,8 +7,7 @@ use Illuminate\Support\ServiceProvider;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
-use Modules\Payment\Contracts\PaymentGatewayInterface;
-use Modules\Payment\Gateways\StripeGateway;
+use Modules\Payment\Factories\PaymentGatewayFactory;
 
 class PaymentServiceProvider extends ServiceProvider
 {
@@ -38,7 +37,8 @@ class PaymentServiceProvider extends ServiceProvider
     {
         $this->app->register(EventServiceProvider::class);
         $this->app->register(RouteServiceProvider::class);
-        $this->app->bind(PaymentGatewayInterface::class, StripeGateway::class);
+        $this->app->singleton(PaymentGatewayFactory::class);
+
     }
 
     /**

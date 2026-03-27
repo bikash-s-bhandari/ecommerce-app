@@ -55,14 +55,14 @@ class CategoryController extends Controller
     public function update(Request $request, Category $category): JsonResponse
     {
         $this->authorize('update', $category);
-        $request->validate([
+        $validated = $request->validate([
             'name' => ['required', 'string', 'max:100'],
             'description' => ['nullable', 'string'],
             'is_active' => ['nullable', 'boolean'],
             'sort_order' => ['nullable', 'integer'],
         ]);
 
-        $category->update($request->validated());
+        $category->update($validated);
 
         Cache::forget('categories:tree');
 
