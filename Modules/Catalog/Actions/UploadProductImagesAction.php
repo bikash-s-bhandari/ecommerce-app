@@ -4,7 +4,6 @@ namespace Modules\Catalog\Actions;
 
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Storage;
 use Modules\Catalog\Models\Product;
 use Modules\Catalog\Models\ProductImage;
 
@@ -40,7 +39,10 @@ class UploadProductImagesAction
             }
         }
 
-        Cache::tags(['products', 'product:' . $product->id])->flush();
+        //tags cache driver redis मा support garcha
+       Cache::tags(['products', 'product:' . $product->id])->flush();
+    //    Cache::forget('products');
+    //    Cache::forget('product:' . $product->id);
 
         return $product->load(['images']);
     }

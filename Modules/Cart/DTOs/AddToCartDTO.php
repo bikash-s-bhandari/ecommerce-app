@@ -14,8 +14,8 @@ readonly class AddToCartDTO
     public static function fromRequest(Request $request): self
     {
         return new self(
-            productId: $request->validated('product_id'),
-            quantity: $request->validated('quantity'),
+            productId: $request->input('product_id'),
+            quantity: $request->input('quantity'),
         );
     }
 }

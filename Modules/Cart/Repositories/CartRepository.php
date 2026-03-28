@@ -13,8 +13,10 @@ class CartRepository
 
     public function resolveCart(Request $request): Cart
     {
-        if ($request->user()) {
-            return $this->model->firstOrCreate(['user_id' => $request->user()->id]);
+        $user = $request->user('sanctum');
+
+        if ($user) {
+            return $this->model->firstOrCreate(['user_id' => $user->id]);
         }
         $sessionId = $request->cookie('cart_session', Str::uuid());
 
