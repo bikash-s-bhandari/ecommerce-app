@@ -34,14 +34,14 @@ class AdminOrderController extends Controller
 
     public function updateStatus(Request $request, int $id, UpdateOrderStatusAction $action): JsonResponse
     {
-        $request->validate([
+        $validated = $request->validate([
             'status' => ['required', Rule::enum(OrderStatusEnum::class)],
         ]);
 
         $order = Order::findOrFail($id);
 
         $order = $action->execute($order, new UpdateOrderStatusDTO(
-            status: OrderStatusEnum::from($request->validated('status')),
+            status: OrderStatusEnum::from($validated['status']),
         ));
 
         return $this->success(OrderResource::make($order), 'Status updated');
